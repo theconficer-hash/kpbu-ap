@@ -1,0 +1,9 @@
+# Tanpa pin versi agar terpasang di Python mana pun (3.9–3.13) di server Render.
+fastapi
+uvicorn[standard]
+numpy
+numpy-financial
+pandas
+openpyxl
+pydantic
+python-multipart

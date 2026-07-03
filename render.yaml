@@ -1,0 +1,10 @@
+# Konfigurasi backend FastAPI untuk Render (free tier).
+# Render membaca file ini otomatis saat deploy via "Blueprint".
+services:
+  - type: web
+    name: kpbu-ap-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
