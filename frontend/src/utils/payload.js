@@ -1,3 +1,19 @@
+// ---- WACC dihitung otomatis (dependent), bukan input manual ----
+// Cost of Equity via CAPM: Ke = Rf + beta × ERP
+export function computeKe(a) {
+  return a.rf + a.beta * a.erp
+}
+
+// Cost of Debt setelah pajak: Kd = bunga × (1 − PPh)
+export function computeKd(a) {
+  return a.bunga * (1 - a.pph_badan)
+}
+
+// WACC = %Ekuitas × Ke + %Pinjaman × Kd
+export function computeWacc(a) {
+  return a.porsi_ekuitas * computeKe(a) + (1 - a.porsi_ekuitas) * computeKd(a)
+}
+
 // Ubah state datar di store menjadi struktur bersarang SimulationInput backend
 export function buildPayload(a) {
   return {
@@ -5,7 +21,7 @@ export function buildPayload(a) {
     general: {
       inflasi: a.inflasi,
       bunga: a.bunga,
-      wacc: a.wacc,
+      wacc: computeWacc(a),
       ppn: a.ppn,
       pph_badan: a.pph_badan,
       kurs: a.kurs,

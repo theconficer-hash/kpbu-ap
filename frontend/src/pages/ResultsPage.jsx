@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import useSimStore from '../store/useSimStore'
 import { downloadExcel } from '../api/client'
-import { buildPayload } from '../utils/payload'
+import { buildPayload, computeWacc } from '../utils/payload'
 
 // ---- Formatter ----
 const idFmt = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
@@ -126,7 +126,7 @@ export default function ResultsPage() {
   }
 
   const r = results
-  const wacc = assumptions.wacc
+  const wacc = computeWacc(assumptions)
   const tahunAwal = r.years[0]
   const m = r.metrics
 

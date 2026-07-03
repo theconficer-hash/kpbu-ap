@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useSimStore from '../store/useSimStore'
 import { runSimulation } from '../api/client'
-import { buildPayload } from '../utils/payload'
+import { buildPayload, computeKe, computeKd, computeWacc } from '../utils/payload'
 
 // Tampilkan desimal sebagai persen tanpa galat floating point (0.03 -> 3)
 const toPct = (v) => Math.round((v ?? 0) * 1e8) / 1e6
@@ -102,9 +102,17 @@ export default function AssumptionsPage() {
             <input type="number" step="0.01" className={inputCls} value={toPct(a.bunga)}
               onChange={setPct('bunga')} />
           </Field>
-          <Field label="WACC (%)">
-            <input type="number" step="0.001" className={inputCls} value={toPct(a.wacc)}
-              onChange={setPct('wacc')} />
+          <Field label="Risk-Free Rate / Yield SBN (%)">
+            <input type="number" step="0.1" className={inputCls} value={toPct(a.rf)}
+              onChange={setPct('rf')} />
+          </Field>
+          <Field label="Beta (β)">
+            <input type="number" step="0.05" className={inputCls} value={a.beta}
+              onChange={setNum('beta')} />
+          </Field>
+          <Field label="Equity Risk Premium (%)">
+            <input type="number" step="0.1" className={inputCls} value={toPct(a.erp)}
+              onChange={setPct('erp')} />
           </Field>
           <Field label="PPN (%)">
             <input type="number" step="0.1" className={inputCls} value={toPct(a.ppn)}
@@ -133,6 +141,41 @@ export default function AssumptionsPage() {
         <p className="mt-3 text-xs text-slate-500">
           Porsi Loan otomatis = {(100 - toPct(a.porsi_ekuitas)).toFixed(0)}%
         </p>
+
+        {/* WACC dihitung otomatis dari input di atas (bukan asumsi manual) */}
+        <div className="mt-4 rounded-xl border border-laut-100 bg-laut-50 p-4">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Cost of Equity (CAPM)
+              </div>
+              <div className="mt-0.5 font-bold text-laut-900">
+                {(computeKe(a) * 100).toFixed(2)}%
+              </div>
+              <div className="text-[11px] text-slate-400">Rf + β × ERP</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Cost of Debt (setelah pajak)
+              </div>
+              <div className="mt-0.5 font-bold text-laut-900">
+                {(computeKd(a) * 100).toFixed(2)}%
+              </div>
+              <div className="text-[11px] text-slate-400">Bunga × (1 − PPh)</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-mangrove-700">
+                WACC (otomatis)
+              </div>
+              <div className="mt-0.5 text-lg font-extrabold text-mangrove-600">
+                {(computeWacc(a) * 100).toFixed(3)}%
+              </div>
+              <div className="text-[11px] text-slate-400">
+                %Ekuitas × Ke + %Pinjaman × Kd — pembanding IRR/NPV
+              </div>
+            </div>
+          </div>
+        </div>
       </Section>
 
       {/* B. Capex */}

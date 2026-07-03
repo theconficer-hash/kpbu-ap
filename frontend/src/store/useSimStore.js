@@ -4,7 +4,11 @@ const defaultAssumptions = {
   tahun_awal: 2026,
   inflasi: 0.03,
   bunga: 0.0975,
-  wacc: 0.086922,
+  // Bahan CAPM untuk WACC (WACC dihitung otomatis, bukan input).
+  // Default dikalibrasi agar WACC awal = 8,6922% (Ke = 7% + 1,0 × 6,041% = 13,041%)
+  rf: 0.07,
+  beta: 1.0,
+  erp: 0.06041,
   ppn: 0.12,
   pph_badan: 0.22,
   kurs: 16500,

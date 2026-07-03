@@ -4,7 +4,7 @@ import {
   CalendarClock, Compass, Briefcase, BarChart3, Handshake, Shield, Hourglass,
   Wrench, Coins, CalendarDays, ClipboardList, Blocks, HardHat, Settings,
   Search, ChevronDown, Info, ArrowRight, MessageCircle, BookText, Calculator,
-  Sigma, SlidersHorizontal, Wallet, SearchX,
+  Sigma, SlidersHorizontal, Wallet, SearchX, Percent, Activity, Gauge,
 } from 'lucide-react'
 import useSimStore from '../store/useSimStore'
 
@@ -47,17 +47,51 @@ const SECTIONS = [
       },
       {
         Icon: Scale, judul: 'WACC',
-        ringkas: 'Rata-rata "ongkos modal" gabungan pinjaman + modal sendiri.',
+        ringkas: 'Rata-rata "ongkos modal" — dihitung otomatis oleh aplikasi.',
         sederhana:
           'Modal proyek dari dua kantong: uang sendiri (ekuitas) dan pinjaman. Masing-masing punya "harga". WACC adalah harga campurannya — batas minimal kelayakan: kalau untung proyek (IRR) di bawah WACC, belum layak.',
         teknis:
-          'Biaya ekuitas umumnya via CAPM: yield SBN 10 th + beta × premi risiko. Dipakai sebagai tingkat diskonto NPV.',
+          'WACC bukan input — dihitung otomatis dari porsi ekuitas/pinjaman, bunga, pajak, dan Cost of Equity (CAPM: Rf + β × ERP). Berubah langsung saat asumsi tersebut diubah, lalu dipakai sebagai tingkat diskonto NPV & pembanding IRR.',
         rumus: 'WACC = (%Ekuitas × Ke) + (%Pinjaman × Bunga × (1 − PPh))',
-        contoh: 'Asumsi awal WACC 8,69% — IRR proyek 10,88% > WACC, artinya proyek layak.',
+        contoh: 'Dengan asumsi awal: Ke 13,04%, porsi 20:80 → WACC 8,69%. IRR proyek 10,88% > WACC → layak.',
         rujukan: [
           { label: 'DJPPR Kemenkeu — Yield SBN', url: 'https://www.djppr.kemenkeu.go.id' },
           { label: 'Damodaran — Risk Premium', url: 'https://pages.stern.nyu.edu/~adamodar/' },
         ],
+      },
+      {
+        Icon: Percent, judul: 'Risk-Free Rate (Rf)',
+        ringkas: 'Imbal hasil "tanpa risiko" — patokan yield obligasi negara.',
+        sederhana:
+          'Kalau uang ditaruh di obligasi negara (SBN), hasilnya hampir pasti. Itulah "lantai" imbal hasil: investasi lain yang lebih berisiko harus menjanjikan lebih dari ini.',
+        teknis:
+          'Umumnya memakai yield SBN tenor 10 tahun. Menjadi komponen dasar CAPM untuk menghitung Cost of Equity. Perlu dimutakhirkan karena yield bergerak mengikuti pasar.',
+        contoh: 'Asumsi awal Rf 7% — cek yield SBN 10 th terkini untuk memutakhirkan.',
+        rujukan: [
+          { label: 'DJPPR Kemenkeu — SBN', url: 'https://www.djppr.kemenkeu.go.id' },
+          { label: 'PHEI — Yield Obligasi', url: 'https://www.phei.co.id' },
+        ],
+      },
+      {
+        Icon: Activity, judul: 'Beta (β)',
+        ringkas: 'Ukuran seberapa berisiko bisnis proyek dibanding pasar.',
+        sederhana:
+          'Beta 1 artinya risikonya "sepadan pasar". Di atas 1 lebih bergejolak, di bawah 1 lebih kalem. Proyek infrastruktur dengan pendapatan pasti dari pemerintah biasanya beta-nya lebih rendah.',
+        teknis:
+          'Diambil dari beta industri sejenis (unlevered → relevered sesuai struktur modal). Mengalikan ERP dalam CAPM.',
+        contoh: 'Asumsi awal β = 1,0 (netral). Skema AP yang pasti bisa memakai β < 1.',
+        rujukan: [{ label: 'Damodaran — Beta per Industri', url: 'https://pages.stern.nyu.edu/~adamodar/' }],
+      },
+      {
+        Icon: Gauge, judul: 'Equity Risk Premium (ERP)',
+        ringkas: 'Ekstra imbal hasil yang diminta investor saham di atas Rf.',
+        sederhana:
+          '"Kalau cuma dapat setara bunga obligasi negara, buat apa ambil risiko jadi pemegang saham?" ERP adalah tambahan imbal hasil sebagai kompensasi risiko itu.',
+        teknis:
+          'ERP Indonesia dipublikasikan a.l. oleh Damodaran dan diperbarui berkala. Bersama Rf dan beta membentuk Cost of Equity: Ke = Rf + β × ERP.',
+        rumus: 'Ke = Rf + β × ERP',
+        contoh: 'Asumsi awal ERP 6,04% → Ke = 7% + 1,0 × 6,04% = 13,04%.',
+        rujukan: [{ label: 'Damodaran — Country Risk', url: 'https://pages.stern.nyu.edu/~adamodar/' }],
       },
       {
         Icon: Receipt, judul: 'PPN',
