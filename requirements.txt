@@ -1,0 +1,7 @@
+# Dependensi Python untuk Vercel Serverless Function (backend FastAPI).
+# Tanpa uvicorn (Vercel menyediakan server ASGI) & tanpa pandas (tak dipakai backend).
+fastapi
+numpy
+numpy-financial
+openpyxl
+pydantic
