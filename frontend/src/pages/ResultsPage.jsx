@@ -3,9 +3,10 @@ import {
   BarChart, Bar, Cell, LineChart, Line, XAxis, YAxis, Tooltip, Legend,
   ReferenceLine, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
+import { CheckCircle2, XCircle, ClipboardCheck } from 'lucide-react'
 import useSimStore from '../store/useSimStore'
 import { downloadExcel } from '../api/client'
-import { buildPayload, computeWacc } from '../utils/payload'
+import { buildPayload, computeWacc, computeKe } from '../utils/payload'
 
 // ---- Formatter ----
 const idFmt = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 })
@@ -223,31 +224,117 @@ export default function ResultsPage() {
   const arusKasYears = showAll ? activeYears : activeYears.slice(0, 30)
 
   const irrP = m.irr_proyek
+  const irrE = m.irr_ekuitas
   const npv = m.npv_proyek
+  const ke = computeKe(assumptions)
   const paybackDurasi =
     m.payback_proyek_tahun != null ? m.payback_proyek_tahun - tahunAwal : null
 
+  // ---- Simpulan kelayakan dari 5 indikator (indikasi awal untuk awam) ----
+  const checks = [
+    {
+      ok: irrP != null && irrP > wacc,
+      label: 'IRR Proyek melampaui WACC',
+      detail:
+        irrP != null
+          ? `IRR ${fmtPct(irrP)} vs WACC ${fmtPct(wacc)} — ${irrP > wacc ? 'hasil proyek melebihi ongkos modal' : 'hasil proyek belum menutup ongkos modal'}`
+          : 'IRR proyek tidak dapat dihitung',
+    },
+    {
+      ok: npv >= 0,
+      label: 'NPV Proyek positif',
+      detail: `NPV ${idFmt.format(Math.round(npv))} Rp Juta — ${npv >= 0 ? 'proyek menghasilkan nilai tambah' : 'nilai kini arus kas masih defisit'}`,
+    },
+    {
+      ok: irrE != null && irrE > ke,
+      label: 'IRR Ekuitas melampaui ekspektasi investor',
+      detail:
+        irrE != null
+          ? `IRR Ekuitas ${fmtPct(irrE)} vs Cost of Equity ${fmtPct(ke)} — ${irrE > ke ? 'imbal hasil pemegang saham memadai' : 'imbal hasil di bawah ekspektasi investor'}`
+          : 'IRR ekuitas tidak dapat dihitung',
+    },
+    {
+      ok: paybackDurasi != null,
+      label: 'Modal kembali (payback tercapai)',
+      detail:
+        paybackDurasi != null
+          ? `Modal proyek kembali dalam ${paybackDurasi} tahun (tahun ${m.payback_proyek_tahun})`
+          : 'Akumulasi kas tidak pernah kembali positif dalam horizon simulasi',
+    },
+  ]
+  const lulus = checks.filter((c) => c.ok).length
+  const verdict =
+    lulus === checks.length
+      ? { label: 'LAYAK', warna: 'border-mangrove-600 bg-mangrove-50', teks: 'text-mangrove-700', pesan: 'Seluruh indikator finansial terpenuhi — proyek layak dilanjutkan ke kajian berikutnya.' }
+      : lulus >= 2
+        ? { label: 'LAYAK DENGAN CATATAN', warna: 'border-amber-500 bg-amber-50', teks: 'text-amber-700', pesan: 'Sebagian indikator belum terpenuhi — perlu penyesuaian asumsi (mis. besaran AP, struktur modal, atau biaya).' }
+        : { label: 'BELUM LAYAK', warna: 'border-red-500 bg-red-50', teks: 'text-red-700', pesan: 'Mayoritas indikator tidak terpenuhi — skema perlu ditinjau ulang secara mendasar.' }
+
   return (
     <div>
-      {/* Kartu metrics */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Kartu metrics — 5 indikator */}
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <MetricCard
           title="IRR Proyek"
           value={fmtPct(irrP)}
-          sub={`WACC ${fmtPct(wacc)}`}
+          sub="Imbal hasil proyek"
           tone={irrP != null && irrP > wacc ? 'hijau' : 'merah'}
         />
-        <MetricCard title="IRR Ekuitas" value={fmtPct(m.irr_ekuitas)} />
+        <MetricCard
+          title="WACC"
+          value={fmtPct(wacc)}
+          sub="Ongkos modal — ambang kelayakan"
+        />
+        <MetricCard
+          title="IRR Ekuitas"
+          value={fmtPct(irrE)}
+          sub={`vs Cost of Equity ${fmtPct(ke)}`}
+          tone={irrE != null && irrE > ke ? 'hijau' : 'merah'}
+        />
         <MetricCard
           title="NPV Proyek (Rp Juta)"
           value={<Num value={npv} />}
+          sub={`diskonto @WACC ${fmtPct(wacc)}`}
           tone={npv >= 0 ? 'hijau' : 'merah'}
         />
         <MetricCard
           title="Payback Proyek"
           value={paybackDurasi != null ? `${paybackDurasi} tahun` : 'Tidak tercapai'}
           sub={m.payback_proyek_tahun != null ? `tahun ${m.payback_proyek_tahun}` : null}
+          tone={paybackDurasi != null ? 'laut' : 'merah'}
         />
+      </div>
+
+      {/* Simpulan kelayakan */}
+      <div className={'mb-6 rounded-2xl border-2 p-5 ' + verdict.warna}>
+        <div className="flex flex-wrap items-center gap-3">
+          <ClipboardCheck size={22} className={verdict.teks} />
+          <h2 className={'text-lg font-extrabold tracking-tight ' + verdict.teks}>
+            Simpulan Kelayakan: {verdict.label}
+          </h2>
+          <span className={'rounded-full bg-white px-2.5 py-0.5 text-xs font-bold ' + verdict.teks}>
+            {lulus}/{checks.length} indikator terpenuhi
+          </span>
+        </div>
+        <p className="mt-1.5 text-sm text-slate-600">{verdict.pesan}</p>
+        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+          {checks.map((c) => (
+            <div key={c.label} className="flex items-start gap-2.5 rounded-xl bg-white/70 px-3.5 py-2.5">
+              {c.ok ? (
+                <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-mangrove-600" />
+              ) : (
+                <XCircle size={18} className="mt-0.5 shrink-0 text-red-500" />
+              )}
+              <div>
+                <div className="text-sm font-bold text-slate-700">{c.label}</div>
+                <div className="text-[13px] leading-snug text-slate-500">{c.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] text-slate-400">
+          Simpulan otomatis sebagai indikasi awal — bukan pengganti kajian kelayakan menyeluruh.
+        </p>
       </div>
 
       {/* Aksi */}
