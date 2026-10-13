@@ -1,5 +1,11 @@
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, model_validator
+from typing import List, Literal
+
+# Skema cakupan AP:
+#   capex_opex   : AP = 100% pengembalian capex + biaya O&M (O&M ditanggung BUP)
+#   capex_only   : AP = 100% pengembalian capex saja; O&M di luar lingkup BUP
+#   capex_persen : AP = (ap_coverage x 100)% pengembalian capex + biaya O&M
+APMode = Literal["capex_opex", "capex_only", "capex_persen"]
 
 
 class GeneralAssumptions(BaseModel):
@@ -36,7 +42,30 @@ class CapexKomponen(BaseModel):
 class KPBUAssumptions(BaseModel):
     ap_start_year: int = 6
     ap_konsesi: int = 20
+    ap_mode: APMode = "capex_opex"
+    # Persentase pengembalian capex yang ditanggung AP (dipakai pada mode
+    # capex_persen; 1.0 = 100%).
     ap_coverage: float = 1.0
+
+    @model_validator(mode="before")
+    @classmethod
+    def _kompat_lama(cls, v):
+        # Payload lama tanpa ap_mode: coverage < 1 dibaca sebagai capex_persen
+        if isinstance(v, dict) and "ap_mode" not in v:
+            cov = v.get("ap_coverage", 1.0)
+            if cov is not None and float(cov) < 0.999:
+                v = {**v, "ap_mode": "capex_persen"}
+        return v
+
+    def porsi_capex(self) -> float:
+        """Porsi pengembalian capex yang dibayar AP (0..1)."""
+        if self.ap_mode == "capex_persen":
+            return min(max(self.ap_coverage, 0.0), 1.0)
+        return 1.0
+
+    def opex_dalam_lingkup(self) -> bool:
+        """True bila biaya O&M ditanggung BUP dan dibayar melalui AP."""
+        return self.ap_mode != "capex_only"
 
 
 class SimulationInput(BaseModel):
@@ -84,6 +113,7 @@ class SimulationInput(BaseModel):
                 "kpbu": {
                     "ap_start_year": 6,
                     "ap_konsesi": 20,
+                    "ap_mode": "capex_opex",
                     "ap_coverage": 1.0,
                 },
                 "biaya_om_persen": 0.01,

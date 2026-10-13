@@ -225,9 +225,9 @@ const SECTIONS = [
       {
         Icon: ClipboardList, judul: 'AP Coverage',
         ringkas: 'Cakupan yang ditanggung AP.',
-        sederhana: 'Apakah pembayaran pemerintah menutup biaya bangun + biaya rawat (100%), atau biaya bangun saja.',
-        teknis: 'Opsi: Capex + Opex (100%) atau Capex Only.',
-        contoh: 'Asumsi awal memakai Capex + Opex (100%).',
+        sederhana: 'Apakah pembayaran pemerintah menutup biaya bangun + biaya rawat, biaya bangun saja, atau hanya sebagian biaya bangun.',
+        teknis: 'Tiga opsi: Capex + Opex (100% capex + O&M); Capex Only (100% capex, O&M di luar lingkup BUP); Capex dengan Persentase (x% capex + O&M, persentase diisi pengguna).',
+        contoh: 'Capex dengan Persentase 90% → AP hanya menutup 90% pengembalian capex; gunakan untuk menguji batas kelayakan.',
         rujukan: [{ label: 'Struktur perjanjian KPBU', url: 'https://kpbu.bappenas.go.id' }],
       },
     ],

@@ -13,7 +13,8 @@ def calculate(data: SimulationInput, capex_result: dict, years: list) -> dict:
 
     AP dihitung PER komponen non-komersial: masing-masing punya stream AP
     sendiri yang mulai saat komponen itu beroperasi (setelah konstruksi) dan
-    berjalan selama masa konsesi AP. AP = capital recovery capex + opex.
+    berjalan selama masa konsesi AP. AP = capital recovery capex x porsi
+    capex + opex (opex nol bila skema Capex Only).
     Seluruh stream diagregasi per tahun. Nilai dalam satuan Rp Juta.
     """
     per_tahun: dict = {y: 0.0 for y in years}
@@ -23,8 +24,9 @@ def calculate(data: SimulationInput, capex_result: dict, years: list) -> dict:
     ap_mulai_global = None
     ap_selesai_global = None
 
-    # Coverage: >=1.0 -> capex penuh; <1.0 -> sebagian
-    cov_eff = 1.0 if data.kpbu.ap_coverage >= 1.0 else data.kpbu.ap_coverage
+    # Skema cakupan AP (lihat KPBUAssumptions.ap_mode)
+    cov_eff = data.kpbu.porsi_capex()
+    om_rate = data.biaya_om_persen if data.kpbu.opex_dalam_lingkup() else 0.0
 
     for komp in data.komponen:
         if komp.tipe != "non_komersial":
@@ -40,7 +42,7 @@ def calculate(data: SimulationInput, capex_result: dict, years: list) -> dict:
         ap_selesai = ap_mulai + data.kpbu.ap_konsesi - 1
 
         ap_capex = capex_komp * CAPITAL_RECOVERY_FACTOR * cov_eff
-        ap_opex = capex_komp * data.biaya_om_persen
+        ap_opex = capex_komp * om_rate
         ap_komp = ap_capex + ap_opex
 
         for y in range(ap_mulai, ap_selesai + 1):

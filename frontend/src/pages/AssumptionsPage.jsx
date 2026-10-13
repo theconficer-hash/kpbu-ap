@@ -218,13 +218,32 @@ export default function AssumptionsPage() {
               onChange={setNum('ap_konsesi')} />
           </Field>
           <Field label="AP Coverage">
-            <select className={inputCls} value={a.ap_coverage}
-              onChange={(e) => setAssumptions({ ap_coverage: Number(e.target.value) })}>
-              <option value={1}>Capex + Opex (100%)</option>
-              <option value={0.9999}>Capex Only</option>
+            <select className={inputCls} value={a.ap_mode ?? 'capex_opex'}
+              onChange={(e) => {
+                const mode = e.target.value
+                setAssumptions(mode === 'capex_persen'
+                  ? { ap_mode: mode, ap_coverage: a.ap_coverage < 1 ? a.ap_coverage : 0.9 }
+                  : { ap_mode: mode, ap_coverage: 1.0 })
+              }}>
+              <option value="capex_opex">Capex + Opex</option>
+              <option value="capex_only">Capex Only</option>
+              <option value="capex_persen">Capex dengan Persentase</option>
             </select>
           </Field>
+          {a.ap_mode === 'capex_persen' && (
+            <Field label="Persentase Capex yang Dibayar AP (%)">
+              <input type="number" step="1" min="0" max="100" className={inputCls}
+                value={toPct(a.ap_coverage)} onChange={setPct('ap_coverage')} />
+            </Field>
+          )}
         </div>
+        <p className="mt-2 text-xs text-slate-500">
+          {a.ap_mode === 'capex_only'
+            ? 'AP hanya mengembalikan capex. Biaya O&M di luar lingkup BUP sehingga tidak dihitung dalam AP maupun laba rugi.'
+            : a.ap_mode === 'capex_persen'
+              ? 'AP mengembalikan sebagian capex sesuai persentase di atas, ditambah biaya O&M penuh.'
+              : 'AP mengembalikan 100% capex ditambah biaya O&M yang ditanggung BUP.'}
+        </p>
       </Section>
 
       {/* C. Opex */}

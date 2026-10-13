@@ -44,7 +44,8 @@ export function buildPayload(a) {
     kpbu: {
       ap_start_year: a.ap_start_year,
       ap_konsesi: a.ap_konsesi,
-      ap_coverage: a.ap_coverage,
+      ap_mode: a.ap_mode ?? 'capex_opex',
+      ap_coverage: a.ap_mode === 'capex_persen' ? a.ap_coverage : 1.0,
     },
     biaya_om_persen: a.biaya_om_persen,
   }

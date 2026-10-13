@@ -17,6 +17,9 @@ const defaultAssumptions = {
   masa_pinjaman: 20,
   ap_start_year: 6,
   ap_konsesi: 20,
+  // Skema cakupan AP: 'capex_opex' | 'capex_only' | 'capex_persen'
+  ap_mode: 'capex_opex',
+  // Persentase capex yang dibayar AP (dipakai pada mode capex_persen)
   ap_coverage: 1.0,
   biaya_om_persen: 0.01,
   // Soft cost — default cocok dengan SoftCostAssumptions backend

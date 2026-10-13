@@ -155,7 +155,9 @@ def _sheet_asumsi(ws, data):
     kpbu = [
         ("AP Start Year", data.kpbu.ap_start_year, "0"),
         ("Masa Konsesi AP", data.kpbu.ap_konsesi, "0"),
-        ("AP Coverage", data.kpbu.ap_coverage, PCT),
+        ("Skema Cakupan AP", {"capex_opex": "Capex + Opex", "capex_only": "Capex Only",
+                              "capex_persen": "Capex dengan Persentase"}[data.kpbu.ap_mode], "@"),
+        ("Porsi Capex yang Dibayar AP", data.kpbu.porsi_capex(), PCT),
         ("Biaya O&M", data.biaya_om_persen, PCT),
     ]
     for label, val, fmt in kpbu:

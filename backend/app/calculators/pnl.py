@@ -10,6 +10,9 @@ def calculate(data: SimulationInput, ap_result: dict, financing_result: dict,
     AP revenue - opex = EBITDA; dikurangi depresiasi -> EBIT; dikurangi bunga
     -> EBT; dikurangi pajak badan -> EAT. Nilai dalam satuan Rp Juta.
     """
+    # Skema Capex Only: O&M di luar lingkup BUP, sehingga tidak masuk P&L
+    om_rate = data.biaya_om_persen if data.kpbu.opex_dalam_lingkup() else 0.0
+
     # Pra-hitung total capex & rentang operasi per komponen
     komp_info = []
     for komp in data.komponen:
@@ -24,7 +27,7 @@ def calculate(data: SimulationInput, ap_result: dict, financing_result: dict,
                 total_capex_komponen / komp.masa_operasi
                 if komp.masa_operasi > 0 else 0.0
             ),
-            "opex_tahunan": total_capex_komponen * data.biaya_om_persen,
+            "opex_tahunan": total_capex_komponen * om_rate,
             "op_mulai": op_mulai,
             "op_selesai": op_selesai,
         })
